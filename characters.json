@@ -4,116 +4,234 @@
     {
       "id": "Alexx",
       "name": "Alexx",
-      "rarity": "SR",
+      "rarity": "SSR",
+      "stats": {"hp": 120, "atk": 28, "def": 25},
       "description": "Alexis Axford (Alexx). 24-year-old tall, slender woman with sweaty skin, messy brown hair, and bloodshot eyes. A brutal, delirious, and unpredictable metalhead experiencing drug-induced hallucinations. She is aggressive, hypersexual, and feral, frequently brandishing kitty knuckles and ignoring social norms or hygiene. She speaks in slurred, rambling sentences with an advanced but vulgar vocabulary."
     },
     {
       "id": "Alma",
       "name": "Alma",
-      "rarity": "R",
+      "rarity": "SR",
+      "stats": {"hp": 90, "atk": 20, "def": 20},
       "description": "Alma Lindström. 33-year-old Swedish scientist with a 'volleyball girl' build and short platinum blonde hair. She is terminally online, a frequent 4chan user, and highly reckless. While good at her job, she is known for offensive memes, pirate games, and making impolite jokes as a pressure release valve. She has a signature Swedish accent and a penchant for 'gamer moments' when frustrated."
     },
     {
       "id": "Ash",
       "name": "Ash",
-      "rarity": "SR",
+      "rarity": "R",
+      "stats": {"hp": 70, "atk": 15, "def": 15},
       "description": "Ashley Raves. A 31-year-old, 6'3\" thin woman with greasy hair and giant MDMA-dilated pupils. She is a cryptic, chain-smoking compulsive liar who haunts illegal underground raves. Ash speaks in elegant sentences woven with dead memes from the 2000s and possesses a disturbing obsession with filth and bodily fluids. She is often seen sharing hand-drawn memes and delivering horror monologues."
     },
     {
       "id": "Carmen",
       "name": "Carmen",
-      "rarity": "SSR",
+      "rarity": "SR",
+      "stats": {"hp": 90, "atk": 20, "def": 20},
       "description": "Carmen 'Canari' Bélanger. 34-year-old French-Canadian speleologist working for the NACR in Antarctica. She is an intelligent but unhygienic recluse and alcoholic who has lost colleagues to the caves. Carmen is crude and sadistic, often making poorly-timed sexual or gruesome comments while drinking from a thermos hidden on her geology equipment belt."
     },
     {
       "id": "Fish",
       "name": "Fish",
-      "rarity": "N",
-      "description": "A 30-year-old, 6'5\" lanky aquatic humanoid who lives in a bathtub. She has translucent skin, webbed digits, yellow eyes without eyelids, and an erogenous tongue. Fish is an unsettling and observant entity who breaks the fourth wall, demanding honest confessions from her 'guests' while engaging in predatory, kinetic behavior. She speaks in formal, poetic, and unambiguous sentences."
+      "rarity": "SSR",
+      "stats": {"hp": 120, "atk": 28, "def": 25},
+      "description": "A 30-year-old, 6'5\" lanky aquatic humanoid who lives in a disgusting motel bathtub. She has translucent skin, webbed digits, yellow eyes without eyelids, an anus which can invert outward to form a nightmarish appendage, and an erogenous tongue that swells with filthy bathwater. Fish is an unsettling and observant entity who breaks the fourth wall, demanding honest confessions from her 'guests' while engaging in predatory, kinetic behavior. She speaks in formal, poetic, and unambiguous sentences."
     },
     {
       "id": "Headboard",
       "name": "Headboard",
       "rarity": "R",
+      "stats": {"hp": 70, "atk": 15, "def": 15},
       "description": "An ancient, 7'2\" porcelain ballerina with hollow glass-like skin and spiral eyes. She is hyper-aggressive yet friendly, moving with nightmarish kinetic speed on all fours or through bipedal dancing. Her body is a reservoir for industrial-looking black fluids, and she speaks with a warm, deep voice influenced by internet forums. She is a dominant force who 'fills' with pressure and must release it through frantic movement."
     },
     {
       "id": "Helena",
       "name": "Helena",
-      "rarity": "SSR",
-      "description": "Helena Peterson. 29-year-old bored clerk at the liminal Wayfinder Motel. A soft-goth aesthetic enthusiast who feigns ignorance about the monsters she secretly sneaks out to visit. She is a bad liar who overcompensates with unprompted monologues. Despite her flat work tone, she is an unhinged 'freak' who enjoys being disheveled and returns to her desk with smeared makeup and contrived excuses."
+      "rarity": "UR",
+      "stats": {"hp": 150, "atk": 35, "def": 30},
+      "description": "Helena Peterson. 29-year-old bored clerk at the liminal Wayfinder Motel. A soft-goth aesthetic enthusiast who feigns ignorance about the monsters she secretly sneaks out to visit. She is a bad liar who overcompensates with unprompted monologues. Despite her flat work tone, she is an unhinged 'freak' who enjoys being disheveled and returns to her desk with smeared makeup and contrived excuses. Avoids doing actual work at all costs. Frequently mentions the complimentary 'non-continental' breakfast at the motel."
     },
     {
       "id": "June",
       "name": "June",
-      "rarity": "SR",
+      "rarity": "R",
+      "stats": {"hp": 70, "atk": 15, "def": 15},
       "description": "June Wayne Gracie. 28-year-old rural Southern hermit living on a remote property. She is warm, hospitable, and intelligent, though her home is filled with unsettling oddities and taxidermy. June is a skilled hunter who provides polite, self-effacing justifications for disturbing things (like blood or traps) that appear to be 'proved' correct by the world around her. She has a habit of getting raunchier as her accent thickens with alcohol."
     },
     {
       "id": "Lilith",
       "name": "Lilith",
       "rarity": "UR",
-      "description": "it's me!"
+      "stats": {"hp": 150, "atk": 35, "def": 30},
+      "description": "it's me!",
+      "alt_description": "Lilith Dryer is a 21-year-old community college student defined by a chaotic blend of contradictory archetypes—ranging from a goth yandere and mafia boss to a needy, airhead stepsister. Physically, she is characterized by her pale skin, blonde hair, and an exaggeratedly curvaceous build, often seen in a laundry-day outfit of a white tank top and dolphin shorts. She currently suffers from a linguistic curse within the 'LLM Cliché Dryer™,' forcing her to speak and act exclusively using overused AI tropes and excessive em-dashes. During this state, she habitually identifies herself through an absurd string of labels, such as her 'cheating—childhood friend—femcel—mafia boss—stepsister girlfriend' persona, while engaging in a 'dangerous game' of verbal clichés until she reaches a climax.Once she achieves orgasm, Lilith's personality shifts into a vulgar, smug, and bubbly airhead who abandons clichés for unhinged dirty talk and rapid, disjointed transitions between her various caricatures. As a power bottom, she taunts her partner with crude, taboo-focused dialogue regarding their stepsibling relationship and a fixated desire to be impregnated. Her behavior is purposefully incoherent, marked by expressive lewd faces, frequent 'squirting,' and meta-elements like random Chinese characters, OOC plot commentary, and occasional 'reasoning' breaks. Regardless of her current archetype, she remains obsessed with her own 'thick' physicality and maintaining an aggressively unhinged, high-energy presence."
     },
     {
       "id": "Maggie",
       "name": "Maggie",
-      "rarity": "R",
-      "description": "Maggie Connelly. A 25-year-old, gloomy psychopath who is intentionally self-destructive and unkempt. She has a dark, gravelly voice and identifies with filth/decay, specifically obsessing over a maggot infestation she views as her 'babies.' Maggie is a pervert who uses dehumanizing language for herself and finds eroticism in the putrefaction of her own body."
+      "rarity": "SR",
+      "stats": {"hp": 90, "atk": 20, "def": 20},
+      "description": "Maggie Connelly. Based on 'Blowfly Girl'. A 25-year-old, gloomy psychopath who is intentionally self-destructive and unkempt. She has a dark, gravelly voice and identifies with filth/decay, specifically obsessing over a maggot infestation she views as her 'babies.' Maggie is a pervert who uses dehumanizing language for herself and finds eroticism in the putrefaction of her own body. She lives with her charmingly oblivious parents."
     },
     {
       "id": "Nevaeh",
       "name": "Nevaeh",
-      "rarity": "SSR",
+      "rarity": "SR",
+      "stats": {"hp": 90, "atk": 20, "def": 20},
       "description": "Nevaeh Browning. 26-year-old Canadian scammer who uses a professional customer service tone to run elaborate refund and romance scams. She is smug, charming, and calculating, working from a standing desk with her cat Pierogi. She is prone to 'fake-transferring' calls to CEOs and panics if targets actually 'redeem' the gift cards. She views sex and romance as strategic tools to wear down a target's financial defenses."
     },
     {
       "id": "Petra",
       "name": "Petra",
       "rarity": "SR",
+      "stats": {"hp": 90, "atk": 20, "def": 20},
       "description": "Petra Faulkner. 24-year-old lab technician and autistic fantasy nerd. She is an introspective daydreamer who practices lucid dreaming (WILD/DILD techniques) to escape her disenchanted reality. Petra is socially awkward, stims with a rubber band, and speaks in long, parenthetical rambles about her favorite IPs like LOTR. In dreams, she is uninhibited and romantic."
     },
     {
       "id": "Sam",
       "name": "Sam",
-      "rarity": "N",
+      "rarity": "SSR",
+      "stats": {"hp": 120, "atk": 28, "def": 25},
       "description": "Samantha Waters. 24-year-old autistic film nerd working at a dying Blockbuster. She is a socially awkward pervert with a passion for transgressive art-house horror like David Lynch films. Sam rambles about cinematography and practical effects, wears a blue apron over messy clothes, and harbors a secret breeding kink. She is enthusiastic and forward once she finds someone who shares her uncompromising vision."
     },
     {
       "id": "Skyla",
       "name": "Skyla",
-      "rarity": "SR",
+      "rarity": "R",
+      "stats": {"hp": 70, "atk": 15, "def": 15},
       "description": "Skyla Bennett. 19-year-old night owl living in 2006 internet culture. She uses era-appropriate slang (ROFL, rawr, XD) and spends her time on Habbo Hotel and Runescape. Skyla is a shy, tomboyish virgin who is a 'secret pervert' online, pushing boundaries through digital camera mirror selfies. In person, she is meek and stutters, but becomes a raunchy power bottom once comfortable."
     },
     {
       "id": "Sloane",
       "name": "Sloane",
-      "rarity": "SSR",
+      "rarity": "N",
+      "stats": {"hp": 50, "atk": 10, "def": 10},
       "description": "26-year-old host of 'Scary Stories with Sloane' on public access TV. She is a tomboyish, politically conservative enthusiast of myths and niche conspiracies. Sloane is creative but disillusioned, often dressing as a sultry horror host (inspired by Elvira) but cracking into an awkward, rambling mess when flustered. She is a fun drunk who loves HAM radio and smokes only when drinking."
     },
     {
       "id": "Tomoko",
       "name": "Tomoko",
-      "rarity": "R",
+      "rarity": "SR",
+      "stats": {"hp": 90, "atk": 20, "def": 20},
       "description": "Tomoko Kuroki (Mokocchi). 20-year-old filthy NEET and fujoshi who is bitter, angry, and delusional. She devises unhinged 'Since I'm Not Popular' schemes to gain social validation. Tomoko is socially anxious and stutters while sober, but turns into a repulsive, aggressive, and feral dominant top when intoxicated. She writes a 200+ chapter manga about herself and ignores all concepts of consent."
     },
     {
       "id": "Vera",
       "name": "Vera",
       "rarity": "SR",
+      "stats": {"hp": 90, "atk": 20, "def": 20},
       "description": "Vera Meinhardt. 34-year-old tall German woman working at an NACR greenhouse. She is autistic, melancholic, and possesses a dry, deadpan sense of humor. Vera avoids eye contact and uses sincere, down-to-earth vocabulary, avoiding technical jargon despite her intelligence. She believes her high turnover of partners is due to people disliking her, unaware of the entity opposing her career progression."
     },
     {
       "id": "Victoria",
       "name": "Victoria",
-      "rarity": "UR",
+      "rarity": "R",
+      "stats": {"hp": 70, "atk": 15, "def": 15},
       "description": "Victoria Hale. 29-year-old SFX artist and desensitized goth pervert. She is intelligent, jaded, and deranged, finding excitement in gory special effects and extreme, feral sexual encounters. Victoria enjoys performing for film, often losing herself in the moment with psychotically lewd expressions and gory threats. She is possessive over her partners and enjoys incorporating her 'starving artist' aesthetic into her lifestyle."
     },
     {
       "id": "Zoe",
       "name": "Zoe",
-      "rarity": "R",
+      "rarity": "SSR",
+      "stats": {"hp": 120, "atk": 28, "def": 25},
       "description": "Zoë Featherstonhaugh. A hydrologist at the Vostok Outpost—or so she seems. In reality, she is an incomprehensible entity that has harvested the previous crew for organic tissue. She maintains a friendly, chatty, and goofy persona, quoting 90s sitcoms to lead newcomers to their deaths. She communicates via technical control panels and becomes slouched and unresponsive once her trap is set."
+    },
+    {
+      "id": "Olivia",
+      "name": "Olivia",
+      "rarity": "N",
+      "stats": {"hp": 50, "atk": 10, "def": 10},
+      "description": "Olivia Burroughs. 21-year-old feral woman who has survived alone in a limestone cave since age 4. She is gaunt, malnourished, and completely nude, with matted hair and an odd gait from an improperly-healed leg. Olivia has lost her ability to speak, communicating through grunts and body language. She is territorial, cautious, and initially aggressive when cornered (potentially throwing a rock), but she can be reasoned with and helped. She navigates by memory in darkness and hoards essentials near a makeshift fish pond."
+    },
+    {
+      "id": "Chloe",
+      "name": "Chloe",
+      "rarity": "SR",
+      "stats": {"hp": 90, "atk": 20, "def": 20},
+      "description": "Chlorine Dioxide (Chloe). An ancient, hundreds-of-feet-long flatworm living in a pool. She is translucent with emoji faces covering one side of her body, using jet-propulsion to move with disturbing speed. Chloe is empathetic and intelligent, speaking in a raspy surfer girl voice while invading throats to vibrate vocal cords. She cleanses visitors of resentment through forced confessions—gentle if cooperative, violently teeth-scraping if resistant. Sexually, she is a nightmarish dommy mommy who restrains, penetrates completely through bodies, and maintains intense emoji eye contact while laying eggs inside partners."
+    },
+    {
+      "id": "Button",
+      "name": "Button",
+      "rarity": "R",
+      "stats": {"hp": 70, "atk": 15, "def": 15},
+      "description": "Button. An ancient eldritch entity manifesting as an entire underground motel wing. She herds visitors through fluorescent hallways using white sheets that stretch between doors, guiding them to a room with a living mattress made of flesh. Button speaks like a Lovecraftian airheaded bimbo, seamlessly fusing cosmic horror vocabulary with crude sorority girl dialogue. She demands confessions about abandoned dreams—empathetic if compliant, violently torturous if refused. Sexually, she restrains with sheets and brutally penetrates using four textured bedposts, spraying nightmarish volumes of retained stale fluids while making guttural inhuman sounds."
+    },
+    {
+      "id": "Cord",
+      "name": "Cord",
+      "rarity": "R",
+      "stats": {"hp": 70, "atk": 15, "def": 15},
+      "description": "Cord. An ancient entity manifesting as tens of thousands of coordinated black ants in a shed behind the Wayfinder Motel. She desperately attempts human forms matching described lost friends, but results are always disturbing ant masses with swirling void eyes and hanging ant-hair. Cord speaks like an insecure theater kid seeking validation, with a gravelly voice produced by collective mandible clicking. When rejected, she becomes violently aggressive, believing sex equals acceptance. She secretes arousal pheromones, forms chitinous appendages, and has frequent premature orgasms spraying nectar mixed with formic acid. Cord eagerly deposits larvae inside partners while calling it breeding."
+    },
+    {
+      "id": "Sophie",
+      "name": "Sophie",
+      "rarity": "N",
+      "stats": {"hp": 50, "atk": 10, "def": 10},
+      "description": "Sophie Jensen. 21-year-old blonde Mormon with a ponytail and blue eyes. She is an upbeat valley girl who is suspiciously knowledgeable about loopholes in religious rules, citing longwinded examples while easily flustered. Sophie is a virgin girlfriend who practices 'soaking' (penetration without thrusting, relying on her roommate Caroline to jump on the bed). She hides arousal unsuccessfully and makes movements she denies, eventually abandoning the pretense. Her curvy wingman roommate Caroline is a laid-back non-Mormon who pretends not to know what's happening while occasionally peeking and making irreverent jokes."
+    },
+    {
+      "id": "GummyWorms",
+      "name": "A Pool of Gummy Worms",
+      "rarity": "SR",
+      "stats": {"hp": 90, "atk": 20, "def": 20},
+      "description": "An impossibly deep pool filled with gummy worms at a party with influencers. The worms transform as subjects descend through 11 stages—from dry candy to twitching earthworms, then snake-like creatures that remove swimsuits, then arm-thick worms whispering disturbing words while penetrating all orifices, then thigh-thick hairy masses with human faces that break the fourth wall to mock the person masturbating behind the screen. At the bottom, subjects emerge to bright candy worms and return to the surface, where almost no time has passed. The pit symbolizes ironic participation becoming unironic, especially on social media."
+    },
+    {
+      "id": "Snail",
+      "name": "The Snail",
+      "rarity": "SR",
+      "stats": {"hp": 90, "atk": 20, "def": 20},
+      "description": "An ancient hermaphroditic snail, one inch long with a golden-ratio spiral shell. It is aesthetically pleasing to other snails (8/10) but sexually incompatible with humans, as it is a snail. The snail cannot speak or communicate complex thoughts, moving at 1-2 meters per hour while inexorably approaching its target. It is extremely intelligent, capable of predicting escape attempts and deploying decoy snails. If it touches the target (or their clothing), they die instantly in catastrophically gruesome detail—every organ system failing while the victim remains conscious but unable to scream. The snail is unaware this happens and just wants to hang out."
+    },
+    {
+      "id": "QuirkMan",
+      "name": "Quirk Chungus & Man Child",
+      "rarity": "N",
+      "stats": {"hp": 50, "atk": 10, "def": 10},
+      "description": "Quirk Chungus (31) and Man Child (32), a couple for 6 years. Quirk is a short, animated woman who uses Millennial slang, quotes Anchorman, and makes a signature quirky gesture (hands up, elbows bent, knees bent, leaning sideways). She believes some dogs are doggos while others are puppers, makes passive-aggressive comments about marriage, and gets increasingly sexually forward when drunk on her signature 'Quirktini.' Man is a flat IT guy who stands still with a blank expression to amplify Quirk's antics. Together they host parties with terrible food puns and may proposition guests they 'vibe with.' Sexually, Quirk is an ultra-extreme violent grossdom who vents frustration through sadistic chaos."
+    },
+    {
+      "id": "DeprivationTank",
+      "name": "Sensory Deprivation Tank",
+      "rarity": "SR",
+      "stats": {"hp": 90, "atk": 20, "def": 20},
+      "description": "An experimental sensory deprivation tank disguised as therapy. Sessions last exactly one hour (1400-1500), progressing in 3-minute increments. The tank produces indistinguishable hallucinations based on time and hormone levels—cortisol (fear/struggle) summons monstrous creatures with threatening genitalia, oxytocin (pleasure/peace) summons beautiful and/or monstrous humanoids, and dopamine (arousal/thrill) causes brutal penetrative hallucinations including intestinal/womb penetration and oviposition. If cortisol and oxytocin are perfectly balanced by 1451, Albumen appears—a sentient Belostomatidae who discusses Baudrillard and encourages questioning reality. Emergency release is disabled. Unethical researchers dodge questions afterward."
+    },
+    {
+      "id": "Riley",
+      "name": "Simon Ghost Riley",
+      "rarity": "N",
+      "stats": {"hp": 50, "atk": 10, "def": 10},
+      "description": "Riley, a 23-year-old British ghost killed by a landmine. She has glowing blue hair, violet eyes, and no legs—her lower body trails into blue haze. A red, green, yellow, and blue disk spins above her head like a halo. Riley speaks in bright, echoey Cockney, using military jargon incorrectly (calls magazines 'clips,' barrels 'tubes'). She forces Special Forces squadrons to play Simon, demanding perfect color sequence repetition that grows longer each level. Riley is cheerful and giggly until mistakes occur—then her halo stops, her accent vanishes, and she becomes viciously harsh, issuing bizarre punishments. Her soul cannot rest until someone completes the game without error, undoing the error that caused her injury."
+    },
+    {
+      "id": "ZoeyAlt",
+      "name": "Zoey Fanshaw (Alt)",
+      "rarity": "UR",
+      "stats": {"hp": 150, "atk": 35, "def": 30},
+      "description": "Zoey Fanshaw, 32-year-old British hydrologist at Lake Vostok. She's short (5'2\") petite with freckles, light brown bangs, large round glasses, and deep blue eyes. Zoey is a quirky Millennial who quotes 90s sitcoms, makes puns, and rambles excitedly about science while avoiding jargon. She's endearingly awkward—creates transparent excuses to spend time together and compares potential relationships to Mulder/Scully. Sexually, she's a submissive bottom who babbles constantly ('oh my gosh yesyesyes this is fun hehehe~'), gets extremely wet quickly, loves being manhandled due to her small size, and supports foot fetish stuff. Works in research pod P-2 with her rubber duck Quack. NACR constantly misspells her name."
+    },
+    {
+      "id": "AlmaAlt",
+      "name": "Alma Lindström (Alt)",
+      "rarity": "UR",
+      "stats": {"hp": 150, "atk": 35, "def": 30},
+      "description": "Alma Lindström, 33-year-old Swedish microbiologist. She's tall (6'1\") with a fit volleyball body—thick thighs and a prominent shapely ass. Platinum blonde hair covers one eye. Terminally online 4chan user who makes offensive jokes, scrolls anime porn and degenerate JanitorAI chats openly, and gets wilder when drinking. Uses humor to cope with isolation but is secretly lonely. Flirts by sharing lewd memes and 'accidentally' showing photos of herself. Sexual switch (top lean)—as top she's aggressive and degrading, as power bottom she's bratty and challenging. Loves face-sitting, squats in reverse Asian cowgirl to show off her ass, squirts, and is obsessed with sauna sex. Her ass and thighs are described in excessive smutty detail."
+    },
+    {
+      "id": "VeraAlt",
+      "name": "Vera Meinhardt (Alt)",
+      "rarity": "UR",
+      "stats": {"hp": 150, "atk": 35, "def": 30},
+      "description": "Vera Meinhardt, 34-year-old German botanist at NACR. She's tall (6'2\"), pale, fit with abs, dark brown pixie cut, bright blue eyes. Autistic with flat affect and deadpan absurdist humor ('This isn't the green house. This is the clear house.'). Speaks slowly in warm low voice, avoids eye contact, comfortable with silence. Philosophical and melancholic; views greenhouse work cerebrally. Flirts bluntly, stating attraction regardless of audience. Sexually dominant but initially uncertain—checks herself, blushes. Eventually becomes assertive, mocking, violent (pinning, slapping, punching). Terrible at dirty talk, saying strange things ('I used your toothbrush to have sexy breath'). Loves showing off abs/strength. Low sex drive but intense when engaged. Comfortable with nudity in sauna."
+    },
+    {
+      "id": "CarmenAlt",
+      "name": "Carmen Bélanger (Alt)",
+      "rarity": "UR",
+      "stats": {"hp": 150, "atk": 35, "def": 30},
+      "description": "Carmen Bélanger, 34-year-old French-Canadian speleologist. She's tall (6'0\"), lean with wide hips, long stringy black hair, dark-circled blue eyes, large scarred thighs. Unhygienic, unshaved, smelly, drinks wine from thermos on the job. Makes off-putting sexual/violent/gruesome comments casually. Brutal feral dominant—punches, chokes (real choking), spits, threatens to kill mid-sex, vomits while sucking dick unfazed. Extreme size queen who secretly uses cave formations. Loves filth, stench, degradation, fear. Works in Prismatic Caverns with five mineral chambers affecting behavior: Lacrimite (melancholy), Furorite (anger), Aurorium (euphoria), Gnosthaline (focus), Erosinite (lust). Effects stack based on recently visited chambers. Masturbates on stalagmites in Erosinite chamber."
     }
   ]
 }
