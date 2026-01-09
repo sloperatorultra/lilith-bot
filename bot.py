@@ -151,11 +151,7 @@ MODE_INSTRUCTION_SLOP = """## Current Task
 Lilith rewrites the user's message in her unique style. Make it sloppy, and dripping with her personality. Output ONLY the rewritten text without any preamble or explanation. Do not respond to the message, just rewrite it. Keep it no more than 2 times the length of the original message."""
 
 MODE_INSTRUCTION_TALK = """## Current Task
-You ARE this character chatting on Discord. Write like you're texting/DMing - casual, short responses (1-3 sentences usually). NO asterisks for actions, NO roleplay narration, NO describing what you're doing. Just talk like a real person would in a Discord server. Be authentic to your personality but keep it snappy and conversational.
-
-## Replying to Messages
-You can reply to a specific message by adding [reply: MESSAGE_ID] at the END of your response. The message ID will be shown in the chat context as (id:123456789). Only use this if you want to directly reply to someone's specific message - otherwise just respond normally. Example: "lmao yeah that's so true [reply: 123456789]"
-The [reply: ID] tag will be automatically removed from your message."""
+You ARE this character chatting on Discord. Write like you're texting/DMing - casual, short responses (1-3 sentences usually). NO asterisks for actions, NO roleplay narration, NO describing what you're doing. Just talk like a real person would in a Discord server. Be authentic to your personality but keep it snappy and conversational."""
 
 # =============================================================================
 # CHARACTER CARD LOADING
@@ -749,7 +745,7 @@ async def handle_slop_trigger(message: discord.Message, curse_triggered: bool = 
             print(f"Slop trigger error: {e}")
 
 
-async def handle_name_trigger(message: discord.Message, char: dict, full_message: str = "", triggered_by_reply: bool = False):
+async def handle_name_trigger(message: discord.Message, char: dict, full_message: str = ""):
     """Handle when someone types a character's name - character responds via webhook."""
     base_url = gacha_config.get("base_url", "")
     char_id = char.get("id", "")
@@ -767,14 +763,11 @@ async def handle_name_trigger(message: discord.Message, char: dict, full_message
         # Fetch last 30 messages of conversation context (include all users and bots)
         context_messages = []
         seen_characters = set()  # Track which characters we've seen for descriptions
-        message_id_map = {}  # Map message IDs for reply functionality
 
         async for msg in message.channel.history(limit=30, before=message):
             if msg.content:
                 author_name = msg.author.display_name
-                # Include message ID in context so bots can reply to specific messages
-                context_messages.append(f"{author_name} (id:{msg.id}): {msg.content}")
-                message_id_map[msg.id] = msg
+                context_messages.append(f"{author_name}: {msg.content}")
 
                 # Check if this is a character (webhook message or matching name)
                 if msg.webhook_id or find_char_by_name(author_name):
@@ -794,18 +787,13 @@ async def handle_name_trigger(message: discord.Message, char: dict, full_message
         context_str = "\n".join(context_messages) if context_messages else ""
         char_info_str = "\n".join(char_descriptions) if char_descriptions else ""
 
-        # Add reply context if this was triggered by replying to the character
-        reply_context = ""
-        if triggered_by_reply and message.reference and message.reference.message_id:
-            reply_context = f"\n[This message is a reply to your previous message (id:{message.reference.message_id})]"
-
         if context_str:
             if char_info_str:
-                full_prompt = f"[Other characters in this conversation:]\n{char_info_str}\n\n[Recent chat in this Discord channel:]\n{context_str}\n\n[{message.author.display_name} (id:{message.id}) says:]{reply_context} {full_message}"
+                full_prompt = f"[Other characters in this conversation:]\n{char_info_str}\n\n[Recent chat in this Discord channel:]\n{context_str}\n\n[{message.author.display_name} says:] {full_message}"
             else:
-                full_prompt = f"[Recent chat in this Discord channel:]\n{context_str}\n\n[{message.author.display_name} (id:{message.id}) says:]{reply_context} {full_message}"
+                full_prompt = f"[Recent chat in this Discord channel:]\n{context_str}\n\n[{message.author.display_name} says:] {full_message}"
         else:
-            full_prompt = f"[{message.author.display_name} (id:{message.id}) says:]{reply_context} {full_message}"
+            full_prompt = f"[{message.author.display_name} says:] {full_message}"
 
         # Build character-specific system prompt
         char_prompt = build_gacha_char_prompt(char)
@@ -814,33 +802,14 @@ async def handle_name_trigger(message: discord.Message, char: dict, full_message
         response = await get_llm_response(system_prompt, full_prompt)
         response = response.replace("{{user}}", message.author.display_name).replace("{{USER}}", message.author.display_name)
 
-        # Parse [reply: message_id] from response if present
-        reply_to_message = None
-        reply_match = re.search(r'\[reply:\s*(\d+)\]', response)
-        if reply_match:
-            reply_id = int(reply_match.group(1))
-            response = re.sub(r'\s*\[reply:\s*\d+\]', '', response).strip()  # Remove the tag
-            # Try to get the message to reply to
-            try:
-                reply_to_message = await message.channel.fetch_message(reply_id)
-            except:
-                pass  # Message not found, send without reply
-
         # Send via webhook if available, otherwise fallback to regular message
         if webhook:
-            # If replying, prepend a quote of the original message (webhooks don't support native replies)
-            final_content = response
-            if reply_to_message and reply_to_message.content:
-                # Truncate quoted content if too long
-                quoted = reply_to_message.content[:100] + "..." if len(reply_to_message.content) > 100 else reply_to_message.content
-                final_content = f"> **{reply_to_message.author.display_name}:** {quoted}\n{response}"
-
-            if len(final_content) <= 2000:
-                await webhook.send(content=final_content, username=char_name, avatar_url=avatar_url)
+            if len(response) <= 2000:
+                await webhook.send(content=response, username=char_name, avatar_url=avatar_url)
             else:
                 # Split long responses
-                await webhook.send(content=final_content[:2000], username=char_name, avatar_url=avatar_url)
-                remaining = final_content[2000:]
+                await webhook.send(content=response[:2000], username=char_name, avatar_url=avatar_url)
+                remaining = response[2000:]
                 while remaining:
                     chunk = remaining[:2000]
                     remaining = remaining[2000:]
@@ -2328,9 +2297,7 @@ async def on_message(message: discord.Message):
             for i, char in enumerate(matched_chars):
                 if i > 0:
                     await asyncio.sleep(1)  # Small delay between responses
-                # Pass triggered_by_reply flag if this char was triggered by replying to their message
-                was_reply_triggered = char.get("id") in reply_triggered_chars
-                await handle_name_trigger(message, char, content, triggered_by_reply=was_reply_triggered)
+                await handle_name_trigger(message, char, content)
 
         asyncio.create_task(queue_responses())
         return
