@@ -5,6 +5,8 @@ Uses v2 character card spec for base character/world context.
 """
 
 import asyncio
+import base64
+import io
 import json
 import random
 import re
@@ -14,6 +16,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from openai import AsyncOpenAI
+from PIL import Image
+import boto3
+from botocore.config import Config
+import aiohttp
 
 # =============================================================================
 # CONFIGURATION
@@ -40,6 +46,22 @@ RARITY_EMOJIS = {
     "SR": "\U0001f7e3",
     "SSR": "\U0001f31f",
     "UR": "\U0001f48e",
+}
+
+# R2 Storage Configuration (for Chub.ai character imports)
+R2_ACCOUNT_ID = "YOUR_R2_ACCOUNT_ID_HERE"
+R2_ACCESS_KEY = "YOUR_R2_ACCESS_KEY_HERE"
+R2_SECRET_KEY = "YOUR_R2_SECRET_KEY_HERE"
+R2_BUCKET = "YOUR_R2_BUCKET_NAME_HERE"
+R2_PUBLIC_URL = "YOUR_R2_PUBLIC_URL_HERE"  # e.g., https://pub-xxx.r2.dev
+
+# Stats per rarity tier (for imported characters)
+RARITY_STATS = {
+    "N":   {"hp": 50,  "atk": 10, "def": 10},
+    "R":   {"hp": 70,  "atk": 15, "def": 15},
+    "SR":  {"hp": 90,  "atk": 20, "def": 20},
+    "SSR": {"hp": 120, "atk": 28, "def": 25},
+    "UR":  {"hp": 150, "atk": 35, "def": 30},
 }
 
 # Keywords/phrases that trigger automatic responses (case-insensitive)
@@ -229,6 +251,104 @@ def load_gacha_config(path: str) -> dict:
 
 # Load gacha config at startup
 gacha_config = load_gacha_config(GACHA_CONFIG_PATH)
+
+
+def save_gacha_config():
+    """Save gacha config to file."""
+    with open(GACHA_CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(gacha_config, f, indent=2)
+
+
+# =============================================================================
+# CHUB.AI CHARACTER IMPORT FUNCTIONS
+# =============================================================================
+
+def get_r2_client():
+    """Get boto3 client for R2 storage."""
+    return boto3.client(
+        's3',
+        endpoint_url=f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com',
+        aws_access_key_id=R2_ACCESS_KEY,
+        aws_secret_access_key=R2_SECRET_KEY,
+        config=Config(signature_version='s3v4')
+    )
+
+
+def upload_char_image_sync(char_id: str, image_bytes: bytes) -> str:
+    """Upload character image to R2, return public URL."""
+    client = get_r2_client()
+    key = f"{char_id}-img.webp"
+
+    # Upload PNG as webp (Discord handles the conversion on display)
+    client.put_object(
+        Bucket=R2_BUCKET,
+        Key=key,
+        Body=image_bytes,
+        ContentType='image/png'
+    )
+
+    return f"{R2_PUBLIC_URL}/{key}"
+
+
+def parse_chub_url(url: str):
+    """Extract username and character_id from chub.ai URL."""
+    # Handles: https://chub.ai/characters/username/char-id
+    match = re.match(r'https?://chub\.ai/characters/([^/]+)/([^/?]+)', url)
+    if match:
+        return match.group(1), match.group(2)
+    return None
+
+
+def extract_card_json(png_bytes: bytes):
+    """Extract character card JSON from PNG metadata."""
+    try:
+        img = Image.open(io.BytesIO(png_bytes))
+        if 'chara' in img.info:
+            json_str = base64.b64decode(img.info['chara']).decode('utf-8')
+            return json.loads(json_str)
+    except Exception as e:
+        print(f"Error extracting card JSON: {e}")
+    return None
+
+
+async def fetch_chub_character(username: str, char_id: str):
+    """Fetch character data and image from Chub.ai."""
+    png_url = f"https://avatars.charhub.io/avatars/{username}/{char_id}/chara_card_v2.png"
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(png_url) as resp:
+            if resp.status != 200:
+                return None, None
+            png_data = await resp.read()
+
+    # Extract JSON from PNG metadata
+    card_data = extract_card_json(png_data)
+    if not card_data:
+        return None, None
+
+    return card_data, png_data
+
+
+def chub_to_bot_format(card_data: dict, chub_username: str, chub_id: str, rarity: str = "SR") -> dict:
+    """Convert Chub.ai card to bot character format."""
+    data = card_data.get("data", card_data)
+    name = data.get("name", "Unknown")
+
+    # Create ID from name (alphanumeric only)
+    char_id = re.sub(r'[^a-zA-Z0-9]', '', name)
+
+    # Use only description field (keep {{char}}/{{user}} for runtime replacement)
+    description = data.get("description", "")
+
+    return {
+        "id": char_id,
+        "name": name,
+        "rarity": rarity,
+        "stats": RARITY_STATS.get(rarity, RARITY_STATS["SR"]).copy(),
+        "description": description.strip(),
+        "chub_source": f"https://chub.ai/characters/{chub_username}/{chub_id}"
+    }
+
 
 # Lock to prevent race conditions in roll/claim operations
 roll_lock = asyncio.Lock()
@@ -420,11 +540,15 @@ def find_char_by_name(name: str) -> dict | None:
     return None
 
 
-def build_gacha_char_prompt(char: dict) -> str:
+def build_gacha_char_prompt(char: dict, user_name: str = "User") -> str:
     """Build a system prompt for a gacha character based on their description."""
     name = char.get("name", "Unknown")
     description = get_char_description(char)
     rarity = char.get("rarity", "N")
+
+    # Replace {{char}} and {{user}} placeholders in description
+    description = description.replace("{{char}}", name).replace("{{Char}}", name).replace("{{CHAR}}", name)
+    description = description.replace("{{user}}", user_name).replace("{{User}}", user_name).replace("{{USER}}", user_name)
 
     return f"""# Character: {name}
 
@@ -796,7 +920,7 @@ async def handle_name_trigger(message: discord.Message, char: dict, full_message
             full_prompt = f"[{message.author.display_name} says:] {full_message}"
 
         # Build character-specific system prompt
-        char_prompt = build_gacha_char_prompt(char)
+        char_prompt = build_gacha_char_prompt(char, message.author.display_name)
         system_prompt = f"{char_prompt}\n\n{MODE_INSTRUCTION_TALK}"
 
         response = await get_llm_response(system_prompt, full_prompt)
@@ -879,7 +1003,7 @@ async def handle_talk(message: discord.Message, char_name: str, prompt: str):
             full_prompt = f"[{message.author.display_name} says to you:] {prompt}"
 
         # Build character-specific system prompt
-        char_prompt = build_gacha_char_prompt(char)
+        char_prompt = build_gacha_char_prompt(char, message.author.display_name)
         system_prompt = f"{char_prompt}\n\n{MODE_INSTRUCTION_TALK}"
 
         response = await get_llm_response(system_prompt, full_prompt)
@@ -1816,6 +1940,91 @@ async def slash_pool(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 
+@bot.tree.command(name="addchar", description="Add a character from Chub.ai to the gacha pool")
+@app_commands.describe(
+    url="Chub.ai character URL (e.g., https://chub.ai/characters/username/char-id)",
+    rarity="Character rarity (default: SR)"
+)
+@app_commands.choices(rarity=[
+    app_commands.Choice(name="N - Common", value="N"),
+    app_commands.Choice(name="R - Rare", value="R"),
+    app_commands.Choice(name="SR - Super Rare (default)", value="SR"),
+    app_commands.Choice(name="SSR - Ultra Rare", value="SSR"),
+    app_commands.Choice(name="UR - Legendary", value="UR"),
+])
+async def slash_addchar(
+    interaction: discord.Interaction,
+    url: str,
+    rarity: str = "SR"
+):
+    await interaction.response.defer()
+
+    # Parse URL
+    parsed = parse_chub_url(url)
+    if not parsed:
+        await interaction.followup.send(
+            "Invalid Chub.ai URL. Expected format: `https://chub.ai/characters/username/char-id`",
+            ephemeral=True
+        )
+        return
+
+    username, chub_char_id = parsed
+
+    # Fetch and parse character
+    try:
+        card_data, image_bytes = await fetch_chub_character(username, chub_char_id)
+    except Exception as e:
+        await interaction.followup.send(f"Error fetching character: {e}", ephemeral=True)
+        return
+
+    if not card_data:
+        await interaction.followup.send(
+            "Could not fetch character from Chub.ai. Make sure the URL is correct and the character exists.",
+            ephemeral=True
+        )
+        return
+
+    # Convert to bot format with chosen rarity
+    char = chub_to_bot_format(card_data, username, chub_char_id, rarity)
+
+    # Check for duplicate
+    existing = get_char_by_id(char["id"])
+    if existing:
+        await interaction.followup.send(
+            f"A character with ID `{char['id']}` already exists! (Name: {existing['name']})",
+            ephemeral=True
+        )
+        return
+
+    # Upload image to R2
+    try:
+        upload_char_image_sync(char["id"], image_bytes)
+    except Exception as e:
+        await interaction.followup.send(f"Failed to upload image to storage: {e}", ephemeral=True)
+        return
+
+    # Add to gacha_config and save
+    gacha_config["characters"].append(char)
+    save_gacha_config()
+
+    # Show confirmation
+    emoji = RARITY_EMOJIS.get(rarity, "")
+    color = RARITY_COLORS.get(rarity, 0x00ff00)
+
+    embed = discord.Embed(
+        title=f"{emoji} Added: {char['name']}",
+        description=char.get("description", "")[:200] + "..." if len(char.get("description", "")) > 200 else char.get("description", ""),
+        color=color
+    )
+    embed.set_thumbnail(url=f"{gacha_config['base_url']}/{char['id']}-img.webp")
+    embed.add_field(name="Rarity", value=f"{emoji} {rarity}", inline=True)
+    embed.add_field(name="Stats", value=f"HP: {char['stats']['hp']} | ATK: {char['stats']['atk']} | DEF: {char['stats']['def']}", inline=True)
+    embed.add_field(name="Source", value=f"[Chub.ai]({char.get('chub_source', url)})", inline=False)
+    embed.set_footer(text=f"Added by {interaction.user.display_name}")
+
+    await interaction.followup.send(embed=embed)
+
+
 @bot.tree.command(name="battle", description="Battle another user's character")
 @app_commands.describe(opponent="The user to battle")
 async def slash_battle(interaction: discord.Interaction, opponent: discord.Member):
@@ -2108,7 +2317,7 @@ async def slash_talk(interaction: discord.Interaction, character: str, message: 
             full_prompt = f"[{interaction.user.display_name} says to you:] {message}"
 
         # Build character-specific system prompt
-        char_prompt = build_gacha_char_prompt(char)
+        char_prompt = build_gacha_char_prompt(char, interaction.user.display_name)
         system_prompt = f"{char_prompt}\n\n{MODE_INSTRUCTION_TALK}"
 
         response = await get_llm_response(system_prompt, full_prompt)
