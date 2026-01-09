@@ -7,6 +7,8 @@ Uses v2 character card spec for base character/world context.
 import asyncio
 import json
 import random
+import re
+import time
 from datetime import date
 import discord
 from discord import app_commands
@@ -147,6 +149,9 @@ Lilith noticed something in the conversation you might be able to help with. You
 
 MODE_INSTRUCTION_SLOP = """## Current Task
 Lilith rewrites the user's message in her unique style. Make it sloppy, and dripping with her personality. Output ONLY the rewritten text without any preamble or explanation. Do not respond to the message, just rewrite it. Keep it no more than 2 times the length of the original message."""
+
+MODE_INSTRUCTION_TALK = """## Current Task
+You ARE this character chatting on Discord. Write like you're texting/DMing - casual, short responses (1-3 sentences usually). NO asterisks for actions, NO roleplay narration, NO describing what you're doing. Just talk like a real person would in a Discord server. Be authentic to your personality but keep it snappy and conversational."""
 
 # =============================================================================
 # CHARACTER CARD LOADING
@@ -397,6 +402,44 @@ def get_char_description(char: dict) -> str:
     return char.get("alt_description") or char.get("description", "A mysterious character.")
 
 
+def find_char_by_name(name: str) -> dict | None:
+    """Find a character by name (case-insensitive, supports partial match)."""
+    name_lower = name.lower().strip()
+    characters = gacha_config.get("characters", [])
+
+    # Try exact match first
+    for char in characters:
+        if char["name"].lower() == name_lower or char["id"].lower() == name_lower:
+            return char
+
+    # Try partial match
+    for char in characters:
+        if name_lower in char["name"].lower() or name_lower in char["id"].lower():
+            return char
+
+    return None
+
+
+def build_gacha_char_prompt(char: dict) -> str:
+    """Build a system prompt for a gacha character based on their description."""
+    name = char.get("name", "Unknown")
+    description = get_char_description(char)
+    rarity = char.get("rarity", "N")
+
+    return f"""# Character: {name}
+
+## Who You Are
+{description}
+
+## Discord Chat Guidelines
+- You ARE {name} chatting on Discord. Talk like yourself, not a narrator.
+- Keep responses SHORT - 1-3 sentences max. This is texting, not a novel.
+- NO asterisks (*action*), NO roleplay narration, NO "I smile warmly" type stuff.
+- Just respond naturally like you would if someone DMed you.
+- Use your unique speech patterns, slang, and personality quirks.
+- You can use emoji sparingly if it fits your character."""
+
+
 # =============================================================================
 # CURSE SYSTEM
 # =============================================================================
@@ -484,6 +527,41 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+# Webhook cache for character responses
+class WebhookCache:
+    def __init__(self):
+        self.webhooks = {}  # {channel_id: webhook}
+
+    async def get_or_create(self, channel):
+        """Get cached webhook or create one for the channel."""
+        channel_id = channel.id
+
+        if channel_id in self.webhooks:
+            return self.webhooks[channel_id]
+
+        try:
+            # Find existing bot webhook
+            webhooks = await channel.webhooks()
+            for wh in webhooks:
+                if wh.name == "Lilith Characters":
+                    self.webhooks[channel_id] = wh
+                    return wh
+
+            # Create new webhook
+            webhook = await channel.create_webhook(name="Lilith Characters")
+            self.webhooks[channel_id] = webhook
+            return webhook
+        except discord.Forbidden:
+            return None  # No permission
+
+webhook_cache = WebhookCache()
+
+# Cooldown cache to prevent rapid character triggers (anti-loop)
+# {channel_id: [list of trigger timestamps]}
+character_cooldowns = {}
+COOLDOWN_WINDOW_SECONDS = 10  # Time window to track
+COOLDOWN_MAX_TRIGGERS = 6  # Max triggers in window before cooldown kicks in
 
 # DeepSeek client (OpenAI-compatible API)
 deepseek_client = AsyncOpenAI(
@@ -665,6 +743,167 @@ async def handle_slop_trigger(message: discord.Message, curse_triggered: bool = 
             await send_long_message(message, response)
         except Exception as e:
             print(f"Slop trigger error: {e}")
+
+
+async def handle_name_trigger(message: discord.Message, char: dict, full_message: str = ""):
+    """Handle when someone types a character's name - character responds via webhook."""
+    base_url = gacha_config.get("base_url", "")
+    char_id = char.get("id", "")
+    char_name = char.get("name", "Unknown")
+    avatar_url = f"{base_url}/{char_id}-img.webp" if base_url and char_id else None
+
+    # Get or create webhook for this channel
+    webhook = await webhook_cache.get_or_create(message.channel)
+
+    # Fallback header if no webhook
+    rarity = char.get("rarity", "N")
+    emoji = RARITY_EMOJIS.get(rarity, "")
+
+    try:
+        # Fetch last 30 messages of conversation context (include all users and bots)
+        context_messages = []
+        seen_characters = set()  # Track which characters we've seen for descriptions
+
+        async for msg in message.channel.history(limit=30, before=message):
+            if msg.content:
+                author_name = msg.author.display_name
+                context_messages.append(f"{author_name}: {msg.content}")
+
+                # Check if this is a character (webhook message or matching name)
+                if msg.webhook_id or find_char_by_name(author_name):
+                    seen_characters.add(author_name)
+        context_messages.reverse()
+
+        # Build character descriptions for context
+        char_descriptions = []
+        for seen_name in seen_characters:
+            found_char = find_char_by_name(seen_name)
+            if found_char and found_char["id"] != char["id"]:  # Don't describe self
+                desc = found_char.get("description", "")
+                if desc:
+                    char_descriptions.append(f"- {found_char['name']}: {desc}")
+
+        # Build the full prompt with context - use the entire message they sent
+        context_str = "\n".join(context_messages) if context_messages else ""
+        char_info_str = "\n".join(char_descriptions) if char_descriptions else ""
+
+        if context_str:
+            if char_info_str:
+                full_prompt = f"[Other characters in this conversation:]\n{char_info_str}\n\n[Recent chat in this Discord channel:]\n{context_str}\n\n[{message.author.display_name} says:] {full_message}"
+            else:
+                full_prompt = f"[Recent chat in this Discord channel:]\n{context_str}\n\n[{message.author.display_name} says:] {full_message}"
+        else:
+            full_prompt = f"[{message.author.display_name} says:] {full_message}"
+
+        # Build character-specific system prompt
+        char_prompt = build_gacha_char_prompt(char)
+        system_prompt = f"{char_prompt}\n\n{MODE_INSTRUCTION_TALK}"
+
+        response = await get_llm_response(system_prompt, full_prompt)
+        response = response.replace("{{user}}", message.author.display_name).replace("{{USER}}", message.author.display_name)
+
+        # Send via webhook if available, otherwise fallback to regular message
+        if webhook:
+            if len(response) <= 2000:
+                await webhook.send(content=response, username=char_name, avatar_url=avatar_url)
+            else:
+                # Split long responses
+                await webhook.send(content=response[:2000], username=char_name, avatar_url=avatar_url)
+                remaining = response[2000:]
+                while remaining:
+                    chunk = remaining[:2000]
+                    remaining = remaining[2000:]
+                    await webhook.send(content=chunk, username=char_name, avatar_url=avatar_url)
+        else:
+            # Fallback to regular message with header
+            header = f"**{emoji} {char_name}:**\n"
+            await send_long_message(message, header + response)
+    except Exception as e:
+        await message.reply(f"**{emoji} {char_name}:** Error: {e}")
+
+
+async def handle_talk(message: discord.Message, char_name: str, prompt: str):
+    """Handle the !talk command - talk to a character in your collection."""
+    user_id = str(message.author.id)
+    data = load_user_data()
+    data = check_daily_reset(data)
+    user = get_user(data, user_id)
+    collection = user.get("collection", {})
+
+    # Handle old list format
+    if isinstance(collection, list):
+        collection = {cid: 1 for cid in collection}
+
+    # Find the character
+    char = find_char_by_name(char_name)
+
+    if not char:
+        # List available characters
+        available = [get_char_by_id(cid)["name"] for cid in collection if get_char_by_id(cid)]
+        if available:
+            await message.reply(f"Character '{char_name}' not found. Your collection: {', '.join(available)}")
+        else:
+            await message.reply(f"Character '{char_name}' not found and you have no characters! Use `!roll` to collect some.")
+        return
+
+    # Check if user owns this character (or allow Lilith as default)
+    char_id = char["id"]
+    if char_id not in collection and char_id != "Lilith":
+        available = [get_char_by_id(cid)["name"] for cid in collection if get_char_by_id(cid)]
+        if available:
+            await message.reply(f"You don't own **{char['name']}**! Your collection: {', '.join(available)}")
+        else:
+            await message.reply(f"You don't own **{char['name']}**! Use `!roll` to collect characters.")
+        return
+
+    # Get webhook and character info
+    base_url = gacha_config.get("base_url", "")
+    char_id = char["id"]
+    avatar_url = f"{base_url}/{char_id}-img.webp" if base_url and char_id else None
+    webhook = await webhook_cache.get_or_create(message.channel)
+
+    try:
+        # Fetch recent conversation context (include bot messages)
+        context_messages = []
+        async for msg in message.channel.history(limit=10, before=message):
+            if msg.content:
+                author_name = msg.author.display_name
+                context_messages.append(f"{author_name}: {msg.content}")
+        context_messages.reverse()
+
+        # Build the full prompt with context
+        context_str = "\n".join(context_messages) if context_messages else ""
+        if context_str:
+            full_prompt = f"[Recent chat in this Discord channel:]\n{context_str}\n\n[{message.author.display_name} says to you:] {prompt}"
+        else:
+            full_prompt = f"[{message.author.display_name} says to you:] {prompt}"
+
+        # Build character-specific system prompt
+        char_prompt = build_gacha_char_prompt(char)
+        system_prompt = f"{char_prompt}\n\n{MODE_INSTRUCTION_TALK}"
+
+        response = await get_llm_response(system_prompt, full_prompt)
+        response = response.replace("{{user}}", message.author.display_name).replace("{{USER}}", message.author.display_name)
+
+        # Send via webhook (no header)
+        if webhook:
+            if len(response) <= 2000:
+                await webhook.send(content=response, username=char["name"], avatar_url=avatar_url)
+            else:
+                await webhook.send(content=response[:2000], username=char["name"], avatar_url=avatar_url)
+                remaining = response[2000:]
+                while remaining:
+                    chunk = remaining[:2000]
+                    remaining = remaining[2000:]
+                    await webhook.send(content=chunk, username=char["name"], avatar_url=avatar_url)
+        else:
+            # Fallback if no webhook permission
+            rarity = char.get("rarity", "N")
+            emoji = RARITY_EMOJIS.get(rarity, "")
+            header = f"**{emoji} {char['name']}:**\n"
+            await send_long_message(message, header + response)
+    except Exception as e:
+        await message.reply(f"Error talking to {char['name']}: {e}")
 
 
 async def handle_roll(message: discord.Message):
@@ -1812,6 +2051,92 @@ Write a funny, chaotic argument scene (8-10 sentences) where they each make thei
         await interaction.followup.send(f"Harem error: {e}")
 
 
+@bot.tree.command(name="talk", description="Talk to a character in your collection")
+@app_commands.describe(character="Character name to talk to", message="What you want to say")
+async def slash_talk(interaction: discord.Interaction, character: str, message: str):
+    user_id = str(interaction.user.id)
+    data = load_user_data()
+    data = check_daily_reset(data)
+    user = get_user(data, user_id)
+    collection = user.get("collection", {})
+
+    # Handle old list format
+    if isinstance(collection, list):
+        collection = {cid: 1 for cid in collection}
+
+    # Find the character
+    char = find_char_by_name(character)
+
+    if not char:
+        available = [get_char_by_id(cid)["name"] for cid in collection if get_char_by_id(cid)]
+        if available:
+            await interaction.response.send_message(f"Character '{character}' not found. Your collection: {', '.join(available)}", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"Character '{character}' not found and you have no characters! Use `/roll` to collect some.", ephemeral=True)
+        return
+
+    # Check if user owns this character (or allow Lilith as default)
+    char_id = char["id"]
+    if char_id not in collection and char_id != "Lilith":
+        available = [get_char_by_id(cid)["name"] for cid in collection if get_char_by_id(cid)]
+        if available:
+            await interaction.response.send_message(f"You don't own **{char['name']}**! Your collection: {', '.join(available)}", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"You don't own **{char['name']}**! Use `/roll` to collect characters.", ephemeral=True)
+        return
+
+    # Defer and get webhook
+    await interaction.response.defer()
+    base_url = gacha_config.get("base_url", "")
+    avatar_url = f"{base_url}/{char_id}-img.webp" if base_url and char_id else None
+    webhook = await webhook_cache.get_or_create(interaction.channel)
+
+    try:
+        # Fetch recent conversation context (include bot messages)
+        context_messages = []
+        async for msg in interaction.channel.history(limit=10):
+            if msg.content and msg.id != interaction.id:
+                author_name = msg.author.display_name
+                context_messages.append(f"{author_name}: {msg.content}")
+        context_messages.reverse()
+
+        # Build the full prompt with context
+        context_str = "\n".join(context_messages) if context_messages else ""
+        if context_str:
+            full_prompt = f"[Recent chat in this Discord channel:]\n{context_str}\n\n[{interaction.user.display_name} says to you:] {message}"
+        else:
+            full_prompt = f"[{interaction.user.display_name} says to you:] {message}"
+
+        # Build character-specific system prompt
+        char_prompt = build_gacha_char_prompt(char)
+        system_prompt = f"{char_prompt}\n\n{MODE_INSTRUCTION_TALK}"
+
+        response = await get_llm_response(system_prompt, full_prompt)
+        response = response.replace("{{user}}", interaction.user.display_name).replace("{{USER}}", interaction.user.display_name)
+
+        # Send via webhook (no header)
+        if webhook:
+            # Delete the deferred response
+            await interaction.delete_original_response()
+            if len(response) <= 2000:
+                await webhook.send(content=response, username=char["name"], avatar_url=avatar_url)
+            else:
+                await webhook.send(content=response[:2000], username=char["name"], avatar_url=avatar_url)
+                remaining = response[2000:]
+                while remaining:
+                    chunk = remaining[:2000]
+                    remaining = remaining[2000:]
+                    await webhook.send(content=chunk, username=char["name"], avatar_url=avatar_url)
+        else:
+            # Fallback if no webhook permission
+            rarity = char.get("rarity", "N")
+            emoji = RARITY_EMOJIS.get(rarity, "")
+            header = f"**{emoji} {char['name']}:**\n"
+            await interaction.followup.send(header + response)
+    except Exception as e:
+        await interaction.followup.send(f"Error talking to {char['name']}: {e}")
+
+
 @bot.tree.command(name="curse", description="Sacrifice a character to curse another user")
 @app_commands.describe(target="The user to curse")
 async def slash_curse(interaction: discord.Interaction, target: discord.Member):
@@ -1871,11 +2196,88 @@ async def slash_curse(interaction: discord.Interaction, target: discord.Member):
 
 @bot.event
 async def on_message(message: discord.Message):
-    # Ignore messages from bots (including itself)
-    if message.author.bot:
+    # Don't let the bot respond to itself (non-webhook messages)
+    if message.author.id == bot.user.id:
         return
 
+    # All webhook messages (including our characters) can trigger other characters
+    # The cooldown mechanism prevents infinite loops
+
     content = message.content.strip()
+
+    # Check if sender is a character (to prevent self-triggering)
+    sender_char = find_char_by_name(message.author.display_name)
+    sender_id = sender_char["id"] if sender_char else None
+
+    # Check if message contains character names (triggers character response)
+    # Works for both users and bots - supports up to 3 characters per message
+    matched_chars = []
+    # Strip punctuation for matching
+    content_lower = content.lower()
+    content_stripped = re.sub(r'[^\w\s]', '', content_lower)  # Remove punctuation
+
+    # Special trigger words for specific characters
+    special_triggers = {
+        "locust": "Helena",
+    }
+
+    # Check special triggers first
+    for trigger, char_name in special_triggers.items():
+        if trigger in content_stripped:
+            char = find_char_by_name(char_name)
+            # Don't let character trigger themselves
+            if char and char not in matched_chars and char.get("id") != sender_id:
+                matched_chars.append(char)
+
+    for c in gacha_config.get("characters", []):
+        if c in matched_chars:
+            continue  # Already added via special trigger
+        if c.get("id") == sender_id:
+            continue  # Don't let character trigger themselves
+        name_lower = c["name"].lower()
+        id_lower = c["id"].lower()
+        name_stripped = re.sub(r'[^\w\s]', '', name_lower)
+        id_stripped = re.sub(r'[^\w\s]', '', id_lower)
+
+        # Check if name/id appears in the message (as whole word or substring)
+        if name_stripped in content_stripped or id_stripped in content_stripped:
+            matched_chars.append(c)
+            if len(matched_chars) >= 3:
+                break  # Max 3 characters
+
+    if matched_chars:
+        # Check cooldown - only block if 6+ triggers in last 10 seconds
+        channel_id = message.channel.id
+        now = time.time()
+
+        # Get and clean up old timestamps
+        if channel_id not in character_cooldowns:
+            character_cooldowns[channel_id] = []
+        character_cooldowns[channel_id] = [t for t in character_cooldowns[channel_id] if now - t < COOLDOWN_WINDOW_SECONDS]
+
+        # Check if we're over the limit
+        if len(character_cooldowns[channel_id]) >= COOLDOWN_MAX_TRIGGERS:
+            return  # Too many triggers, skip
+
+        # Record this trigger
+        character_cooldowns[channel_id].append(now)
+
+        # Queue up responses for each matched character
+        async def queue_responses():
+            for i, char in enumerate(matched_chars):
+                if i > 0:
+                    await asyncio.sleep(1)  # Small delay between responses
+                await handle_name_trigger(message, char, content)
+
+        asyncio.create_task(queue_responses())
+        return
+
+    # Bots can trigger slop detection but not commands
+    if message.author.bot:
+        # Check for slop keywords in bot messages
+        if contains_slop_keyword(content):
+            asyncio.create_task(handle_slop_trigger(message))
+        return
 
     # Handle !ask command
     if content.startswith("!ask "):
@@ -1943,6 +2345,36 @@ async def on_message(message: discord.Message):
     # Handle !harem command
     if content == "!harem":
         asyncio.create_task(handle_harem(message))
+        return
+
+    # Handle !talk command - !talk <character> <message>
+    if content.startswith("!talk "):
+        args = content[6:].strip()
+        if not args:
+            await message.reply("Usage: `!talk <character> <message>`\nExample: `!talk Lilith hello there!`")
+            return
+        # Split into character name and message
+        # First word (or quoted string) is character, rest is message
+        if args.startswith('"'):
+            # Quoted character name
+            end_quote = args.find('"', 1)
+            if end_quote != -1:
+                char_name = args[1:end_quote]
+                prompt = args[end_quote + 1:].strip()
+            else:
+                await message.reply("Missing closing quote for character name.")
+                return
+        else:
+            # First word is character name
+            parts = args.split(None, 1)
+            char_name = parts[0]
+            prompt = parts[1] if len(parts) > 1 else ""
+
+        if not prompt:
+            await message.reply("Please provide a message to send to the character.\nUsage: `!talk <character> <message>`")
+            return
+
+        asyncio.create_task(handle_talk(message, char_name, prompt))
         return
 
     # Handle !curse command

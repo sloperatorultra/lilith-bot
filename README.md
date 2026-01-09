@@ -37,6 +37,13 @@ Rolling a character you already own powers them up instead:
 - Stats are modified by dupe power level and a random 0.8-1.2x multiplier
 - You can challenge the bot itself (`@Lilith`) - she fights with x5 Lilith (140% power)
 
+### Talk to Characters
+- **!talk \<character\> \<message\> / /talk** - Chat with any character in your collection
+- Lilith is available to everyone by default
+- Characters respond in Discord chat style (short, casual, no roleplay narration)
+- Example: `!talk Lilith hey what's up?`
+- For names with spaces: `!talk "Quirk Chungus" hello there`
+
 ### Harem Mode
 - **!harem / /harem** - Watch your collected characters argue about who's your favorite
 
@@ -52,6 +59,7 @@ Rolling a character you already own powers them up instead:
 
 ### Passive Triggers
 - **Slop Detection** - Messages containing LLM clichés ("delve", "testament to", "shivers down", etc.) get automatically rewritten
+- **Bot-to-Bot Triggers** - Other bots can trigger slop detection too (chaos mode)
 - **Help Triggers** - Messages containing phrases like "can someone explain" or "help me understand" trigger helpful interjections
 
 ## Setup
