@@ -828,20 +828,19 @@ async def handle_name_trigger(message: discord.Message, char: dict, full_message
 
         # Send via webhook if available, otherwise fallback to regular message
         if webhook:
-            # Prepare thread parameter for reply (webhooks use thread kwarg for replies)
-            send_kwargs = {"content": response, "username": char_name, "avatar_url": avatar_url}
+            # If replying, prepend a quote of the original message (webhooks don't support native replies)
+            final_content = response
+            if reply_to_message and reply_to_message.content:
+                # Truncate quoted content if too long
+                quoted = reply_to_message.content[:100] + "..." if len(reply_to_message.content) > 100 else reply_to_message.content
+                final_content = f"> **{reply_to_message.author.display_name}:** {quoted}\n{response}"
 
-            if len(response) <= 2000:
-                if reply_to_message:
-                    # For webhook replies, we need to use the thread parameter with a message reference
-                    await webhook.send(**send_kwargs)
-                    # Note: Discord webhooks don't support native replies, so we'll mention instead
-                else:
-                    await webhook.send(**send_kwargs)
+            if len(final_content) <= 2000:
+                await webhook.send(content=final_content, username=char_name, avatar_url=avatar_url)
             else:
                 # Split long responses
-                await webhook.send(content=response[:2000], username=char_name, avatar_url=avatar_url)
-                remaining = response[2000:]
+                await webhook.send(content=final_content[:2000], username=char_name, avatar_url=avatar_url)
+                remaining = final_content[2000:]
                 while remaining:
                     chunk = remaining[:2000]
                     remaining = remaining[2000:]
