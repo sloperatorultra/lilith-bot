@@ -2246,6 +2246,20 @@ async def on_message(message: discord.Message):
     matched_chars = []
     reply_triggered_chars = set()  # Track chars triggered by reply to prevent double-trigger
 
+    # Bot-only chain safety cap: if 5+ consecutive bot messages, don't trigger more
+    if message.webhook_id or message.author.bot:
+        try:
+            consecutive_bot_count = 1  # Current message is from a bot
+            async for msg in message.channel.history(limit=5, before=message):
+                if msg.webhook_id or msg.author.bot:
+                    consecutive_bot_count += 1
+                else:
+                    break  # Human message found, stop counting
+            if consecutive_bot_count >= 5:
+                return  # Cap reached, don't trigger more bot responses
+        except:
+            pass
+
     # Check if this is a reply to a character's message
     if message.reference and message.reference.message_id:
         try:
